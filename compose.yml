@@ -1,0 +1,69 @@
+services:
+  server:
+    build:
+      context: .
+    container_name: boilerplate-api
+    hostname: boilerplate-api
+    environment:
+      TZ: ${TZ}
+      PORT: ${PORT}
+      HOST: ${HOST}
+      LOG_LEVEL: ${LOG_LEVEL}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      APP_KEY: ${APP_KEY}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      EMAIL_NAME: ${EMAIL_NAME}
+      EMAIL_FROM: ${EMAIL_FROM}
+    depends_on:
+      - postgres-boilerplate
+      - redis-boilerplate-cache
+    ports:
+      - ${PORT}:${PORT}
+    networks:
+      # - boilerplate-intra-network
+      - boilerplate-extra-network
+  postgres-boilerplate:
+    image: postgres:16-alpine
+    container_name: postgres-boilerplate
+    restart: always
+    user: ${DB_USER}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    expose:
+      - ${DB_PORT}
+    healthcheck:
+      test: ['CMD', 'pg_isready']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - boilerplate-extra-network
+  redis-boilerplate-cache:
+    image: redis/redis-stack-server:7.4.0-v0
+    container_name: redis-boilerplate-cache
+    hostname: redis-boilerplate-cache
+    ports:
+      - 6379:6379
+      - 8001:8001
+    networks:
+      - boilerplate-extra-network
+
+networks:
+  boilerplate-extra-network:
+    external: true
+
+volumes:
+  db-data:
